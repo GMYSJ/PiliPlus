@@ -381,6 +381,9 @@ class _LiveRoomPageState extends State<LiveRoomPage>
   Widget get childWhenDisabled {
     return Obx(() {
       final isFullScreen = this.isFullScreen || plPlayerController.isDesktopPip;
+      final keyboardBottom = isFullScreen
+          ? 0.0
+          : MediaQuery.viewInsetsOf(context).bottom;
       return Stack(
         clipBehavior: Clip.none,
         children: [
@@ -419,20 +422,25 @@ class _LiveRoomPageState extends State<LiveRoomPage>
                 );
               },
             ),
-          ScaffoldLayout(
-            appBar: isWindowMode && isFullScreen && !isPortrait
-                ? null
-                : _buildAppBar(isFullScreen),
-            body: isPortrait
-                ? Obx(
-                    () {
-                      if (_liveRoomController.isPortrait.value) {
-                        return _buildPP(isFullScreen);
-                      }
-                      return _buildPH(isFullScreen);
-                    },
-                  )
-                : _buildBodyH(isFullScreen),
+          AnimatedPadding(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.only(bottom: keyboardBottom),
+            child: ScaffoldLayout(
+              appBar: isWindowMode && isFullScreen && !isPortrait
+                  ? null
+                  : _buildAppBar(isFullScreen),
+              body: isPortrait
+                  ? Obx(
+                      () {
+                        if (_liveRoomController.isPortrait.value) {
+                          return _buildPP(isFullScreen);
+                        }
+                        return _buildPH(isFullScreen);
+                      },
+                    )
+                  : _buildBodyH(isFullScreen),
+            ),
           ),
         ],
       );
@@ -482,7 +490,7 @@ class _LiveRoomPageState extends State<LiveRoomPage>
             width: maxWidth,
             height: videoHeight,
             isFullScreen,
-            needDm: isFullScreen,
+            needDm: true,
             alignment: isFullScreen ? Alignment.center : Alignment.topCenter,
           ),
         ),
@@ -859,8 +867,10 @@ class _LiveRoomPageState extends State<LiveRoomPage>
                         hintText: '输入弹幕内容',
                         hintStyle: TextStyle(color: Colors.white60, fontSize: 14),
                         border: InputBorder.none,
+                        isDense: true,
                         contentPadding: EdgeInsets.symmetric(horizontal: 16),
                       ),
+                      maxLines: 1,
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _submitBarDm(),
                     ),

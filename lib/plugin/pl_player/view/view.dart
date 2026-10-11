@@ -226,7 +226,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       _animationController.forward();
     } else {
       _animationController.reverse();
-      FocusManager.instance.primaryFocus?.unfocus();
     }
 
     if (widget.videoDetailController case final controller?) {
@@ -1155,7 +1154,11 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         plPlayerController.onDoubleTapCenter();
       default:
         if (_suspendedDm == null) {
-          plPlayerController.controls = !plPlayerController.showControls.value;
+          final bool willHide = plPlayerController.showControls.value;
+          plPlayerController.controls = !willHide;
+          if (willHide) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
         } else if (_suspendedDm!.suspend) {
           _dmOffset.value = details.localPosition;
         } else {
