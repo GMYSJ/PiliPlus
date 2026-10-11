@@ -269,7 +269,6 @@ class _LiveRoomPageState extends State<LiveRoomPage>
               title: roomInfoH5?.roomInfo?.title,
               upName: roomInfoH5?.anchorInfo?.baseInfo?.uname,
               plPlayerController: plPlayerController,
-              onSendDanmaku: _liveRoomController.onSendDanmaku,
               onPlayAudio: _liveRoomController.queryLiveUrl,
               isPortrait: isPortrait,
               liveController: _liveRoomController,
@@ -367,12 +366,64 @@ class _LiveRoomPageState extends State<LiveRoomPage>
         ],
       );
     }
+    if ((isFullScreen || PlatformUtils.isDesktop) &&
+        !plPlayerController.isDesktopPip) {
+      player = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          player,
+          _buildLiveDmInputBar,
+        ],
+      );
+    }
     return popScope(
       canPop: !isFullScreen && !plPlayerController.isDesktopPip,
       onPopInvokedWithResult: plPlayerController.onPopInvokedWithResult,
       child: player,
     );
   }
+
+  /// 直播全屏(横屏)状态下的弹幕输入栏:
+  /// 深色半透明、圆角、左右留边距、底部居中。
+  /// 点击后完全复用原有的 [LiveRoomController.onSendDanmaku] 弹幕发送流程。
+  Widget get _buildLiveDmInputBar => Positioned(
+    left: 0,
+    right: 0,
+    bottom: 68,
+    child: Center(
+      child: Container(
+        height: 44,
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        constraints: const BoxConstraints(maxWidth: 360),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(22),
+            onTap: _liveRoomController.onSendDanmaku,
+            child: const Row(
+              children: [
+                SizedBox(width: 16),
+                Icon(Icons.comment_outlined, size: 18, color: Colors.white70),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '输入弹幕内容',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 
   Widget get childWhenDisabled {
     return Obx(() {

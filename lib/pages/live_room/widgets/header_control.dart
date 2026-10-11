@@ -33,7 +33,6 @@ class LiveHeaderControl extends StatefulWidget {
     required this.title,
     required this.upName,
     required this.plPlayerController,
-    required this.onSendDanmaku,
     required this.onPlayAudio,
     required this.isPortrait,
     required this.liveController,
@@ -43,7 +42,6 @@ class LiveHeaderControl extends StatefulWidget {
   final String? title;
   final String? upName;
   final PlPlayerController plPlayerController;
-  final VoidCallback onSendDanmaku;
   final VoidCallback onPlayAudio;
   final bool isPortrait;
   final LiveRoomController liveController;
@@ -153,17 +151,6 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
                 onTap: () => plPlayerController.setAlwaysOnTop(!isAlwaysOnTop),
               );
             }),
-          if (isFullScreen || PlatformUtils.isDesktop)
-            ComBtn(
-              height: btnHeight,
-              tooltip: '发弹幕',
-              icon: const Icon(
-                size: 18,
-                Icons.comment_outlined,
-                color: Colors.white,
-              ),
-              onTap: widget.onSendDanmaku,
-            ),
           if ((Platform.isAndroid && PiliAndroidHelper.isPipAvailable) ||
               (Platform.isIOS && IOSPipHelper.isAvailable) ||
               (PlatformUtils.isDesktop && !isFullScreen))
