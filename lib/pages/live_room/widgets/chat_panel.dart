@@ -352,6 +352,11 @@ class LiveRoomChatPanel extends StatelessWidget {
         if (liveRoomController.isLogin) ...[
           PopupMenuItem(
             height: 38,
+            onTap: () => liveRoomController.onAtUser(item),
+            child: const Text('@TA', style: TextStyle(fontSize: 13)),
+          ),
+          PopupMenuItem(
+            height: 38,
             onTap: () async {
               final res = await LiveHttp.liveShieldUser(
                 uid: item.extra.mid,
