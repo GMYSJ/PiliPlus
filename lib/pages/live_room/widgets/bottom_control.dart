@@ -46,7 +46,20 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
   late final TextEditingController dmInputController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    liveRoomCtr.danmakuInputFocusNode.addListener(_onDmFocusChanged);
+  }
+
+  void _onDmFocusChanged() {
+    if (liveRoomCtr.danmakuInputFocusNode.hasFocus) {
+      plPlayerController.holdControls();
+    }
+  }
+
+  @override
   void dispose() {
+    liveRoomCtr.danmakuInputFocusNode.removeListener(_onDmFocusChanged);
     dmInputController.dispose();
     super.dispose();
   }

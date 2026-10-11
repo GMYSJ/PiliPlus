@@ -93,6 +93,7 @@ class _LiveRoomPageState extends State<LiveRoomPage>
     plPlayerController = _liveRoomController.plPlayerController
       ..addStatusLister(playerListener);
     PlPlayerController.setPlayCallBack(plPlayerController.play);
+    barDmFocusNode.addListener(_onBarDmFocusChanged);
     if (plPlayerController.removeSafeArea) {
       hideSystemBar();
     }
@@ -189,6 +190,7 @@ class _LiveRoomPageState extends State<LiveRoomPage>
         tag: '${_liveRoomController.roomId}${e.name}',
       );
     }
+    barDmFocusNode.removeListener(_onBarDmFocusChanged);
     barDmController.dispose();
     barDmFocusNode.dispose();
     super.dispose();
@@ -557,6 +559,12 @@ class _LiveRoomPageState extends State<LiveRoomPage>
       _liveRoomController.danmakuInputFocusNode.requestFocus();
     } else {
       barDmFocusNode.requestFocus();
+    }
+  }
+
+  void _onBarDmFocusChanged() {
+    if (barDmFocusNode.hasFocus) {
+      plPlayerController.holdControls();
     }
   }
 

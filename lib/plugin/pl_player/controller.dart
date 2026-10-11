@@ -1264,6 +1264,14 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
     });
   }
 
+  /// 弹幕输入框聚焦时:保持控制栏显示并取消自动隐藏。
+  /// 之后整套控件是否关闭,仅由用户点击画面空白区域决定。
+  void holdControls() {
+    _timer?.cancel();
+    _timer = null;
+    showControls.value = true;
+  }
+
   void onSeekStart(int seekFrom) {
     seekPosition.value = seekFrom;
     isSeeking.value = true;
