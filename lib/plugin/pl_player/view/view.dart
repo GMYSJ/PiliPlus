@@ -226,6 +226,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       _animationController.forward();
     } else {
       _animationController.reverse();
+      FocusManager.instance.primaryFocus?.unfocus();
     }
 
     if (widget.videoDetailController case final controller?) {

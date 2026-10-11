@@ -79,6 +79,9 @@ class _LiveRoomPageState extends State<LiveRoomPage>
   late final GlobalKey scKey = GlobalKey();
   late final GlobalKey playerKey = GlobalKey();
 
+  final TextEditingController barDmController = TextEditingController();
+  final FocusNode barDmFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -186,6 +189,8 @@ class _LiveRoomPageState extends State<LiveRoomPage>
         tag: '${_liveRoomController.roomId}${e.name}',
       );
     }
+    barDmController.dispose();
+    barDmFocusNode.dispose();
     super.dispose();
   }
 
@@ -229,7 +234,7 @@ class _LiveRoomPageState extends State<LiveRoomPage>
     if (plPlayerController.keyboardControl) {
       child = PlayerFocus(
         plPlayerController: plPlayerController,
-        onSendDanmaku: _liveRoomController.focusDanmakuInput,
+        onSendDanmaku: _focusDmInput,
         onRefresh: _liveRoomController.queryLiveUrl,
         child: child,
       );
@@ -539,6 +544,20 @@ class _LiveRoomPageState extends State<LiveRoomPage>
     }
   }
 
+  void _focusDmInput() {
+    if (isFullScreen) {
+      _liveRoomController.danmakuInputFocusNode.requestFocus();
+    } else {
+      barDmFocusNode.requestFocus();
+    }
+  }
+
+  Future<void> _submitBarDm() async {
+    if (await _liveRoomController.sendLiveDanmaku(barDmController.text)) {
+      barDmController.clear();
+    }
+  }
+
   PreferredSizeWidget _buildAppBar(bool isFullScreen) {
     return AppBar(
       primary: !plPlayerController.removeSafeArea,
@@ -777,10 +796,7 @@ class _LiveRoomPageState extends State<LiveRoomPage>
         border: Border(top: BorderSide(color: Color(0x1AFFFFFF))),
         color: Color(0x1AFFFFFF),
       ),
-      child: GestureDetector(
-        onTap: _liveRoomController.focusDanmakuInput,
-        behavior: .opaque,
-        child: Padding(
+      child: Padding(
           padding: const .only(top: 5, bottom: 10),
           child: Align(
             alignment: .topCenter,
@@ -822,8 +838,33 @@ class _LiveRoomPageState extends State<LiveRoomPage>
                     );
                   },
                 ),
-                const Expanded(
-                  child: Text('发送弹幕', style: TextStyle(color: baseWhite)),
+                Expanded(
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFF4D4D4D),
+                        width: 1,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: barDmController,
+                      focusNode: barDmFocusNode,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      cursorColor: Colors.white,
+                      textAlignVertical: TextAlignVertical.center,
+                      decoration: const InputDecoration(
+                        hintText: '输入弹幕内容',
+                        hintStyle: TextStyle(color: Colors.white60, fontSize: 14),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _submitBarDm(),
+                    ),
+                  ),
                 ),
                 Builder(
                   builder: (context) {
@@ -897,7 +938,6 @@ class _LiveRoomPageState extends State<LiveRoomPage>
             ),
           ),
         ),
-      ),
     );
     if (_liveRoomController.showSuperChat) {
       return Stack(

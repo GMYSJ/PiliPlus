@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/pages/live_room/controller.dart';
 import 'package:PiliPlus/pages/video/widgets/header_mixin.dart';
@@ -52,8 +54,14 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
   @override
   Widget build(BuildContext context) {
     final isFullScreen = plPlayerController.isFullScreen.value;
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     return Padding(
-      padding: const .symmetric(horizontal: 14, vertical: 13),
+      padding: EdgeInsets.only(
+        left: 14,
+        right: 14,
+        top: 6,
+        bottom: 6 + bottomInset,
+      ),
       child: Material(
         type: .transparency,
         child: Row(
@@ -69,7 +77,10 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
               ),
               onTap: widget.onRefresh,
             ),
-            Expanded(child: _buildLiveDmInput()),
+            if (isFullScreen)
+              Flexible(fit: FlexFit.loose, child: _buildLiveDmInput())
+            else
+              const Spacer(),
             ComBtn(
               height: 30,
               tooltip: '屏蔽',
@@ -233,63 +244,74 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
     );
   }
 
-  /// 底部控制栏内置的弹幕输入框:
-  /// 作为暂停/刷新按钮与右侧功能按钮之间的弹性插槽,限制最大宽度不铺满整行,
-  /// 并与弹幕总开关联动,关闭弹幕时整体隐藏。
+  /// 横屏全屏状态下、底部控制栏内置的弹幕输入框:
+  /// 通过 LayoutBuilder 约束最大宽度,避免铺满整行;并与弹幕总开关联动。
   Widget _buildLiveDmInput() {
     return Obx(
       () {
         if (!plPlayerController.enableShowLiveDanmaku.value) {
           return const SizedBox.shrink();
         }
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 320),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: TextField(
-                      controller: dmInputController,
-                      focusNode: liveRoomCtr.danmakuInputFocusNode,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      cursorColor: Colors.white,
-                      decoration: const InputDecoration(
-                        hintText: '输入弹幕内容',
-                        hintStyle: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 14,
-                        ),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _submitLiveDm(),
-                    ),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final double available = constraints.maxWidth;
+            if (!available.isFinite || available < 160) {
+              return const SizedBox.shrink();
+            }
+            final double width = math.min(320.0, available);
+            return Center(
+              child: Container(
+                width: width,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF4D4D4D),
+                    width: 1,
                   ),
                 ),
-                const SizedBox(width: 8),
-                ComBtn(
-                  height: 40,
-                  tooltip: '发送',
-                  icon: const Icon(Icons.send, size: 18, color: Colors.white),
-                  onTap: () => _submitLiveDm(),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: dmInputController,
+                        focusNode: liveRoomCtr.danmakuInputFocusNode,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        cursorColor: Colors.white,
+                        textAlignVertical: TextAlignVertical.center,
+                        decoration: const InputDecoration(
+                          hintText: '输入弹幕内容',
+                          hintStyle: TextStyle(
+                            color: Colors.white60,
+                            fontSize: 14,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _submitLiveDm(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ComBtn(
+                      height: 40,
+                      tooltip: '发送',
+                      icon: const Icon(
+                        Icons.send,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      onTap: () => _submitLiveDm(),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
