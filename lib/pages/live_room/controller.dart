@@ -19,9 +19,7 @@ import 'package:PiliPlus/models_new/live/live_room_info_h5/data.dart';
 import 'package:PiliPlus/models_new/live/live_room_play_info/codec.dart';
 import 'package:PiliPlus/models_new/live/live_room_play_info/stream.dart';
 import 'package:PiliPlus/models_new/live/live_superchat/item.dart';
-import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/danmaku/danmaku_model.dart';
-import 'package:PiliPlus/pages/live_room/send_danmaku/view.dart';
 import 'package:PiliPlus/pages/video/widgets/header_control.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/data_source.dart';
@@ -108,7 +106,7 @@ class LiveRoomController extends GetxController {
 
   // dm
   LiveDmInfoData? dmInfo;
-  List<RichTextItem>? savedDanmaku;
+  final FocusNode danmakuInputFocusNode = FocusNode();
   int builtLength = 0;
   final messages = <dynamic>[].obs;
   bool get shouldRefresh => builtLength != messages.length;
@@ -513,8 +511,7 @@ class LiveRoomController extends GetxController {
     closeLiveMsg();
     cancelLikeTimer();
     cancelLiveTimer();
-    savedDanmaku?.clear();
-    savedDanmaku = null;
+    danmakuInputFocusNode.dispose();
     messages.clear();
     if (showSuperChat) {
       superChatMsg.clear();
@@ -730,52 +727,31 @@ class LiveRoomController extends GetxController {
     SmartDialog.showToast('账号未登录');
   }
 
-  void onSendDanmaku([bool fromEmote = false]) {
-    if (kReleaseMode && !isLogin) {
-      toastNotLogin();
-      return;
-    }
-    Get.key.currentState!.push(
-      PublishRoute(
-        barrierColor: Colors.transparent,
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return Theme(
-            data: ThemeUtils.darkTheme,
-            child: LiveSendDmPanel(
-              fromEmote: fromEmote,
-              liveRoomController: this,
-              items: savedDanmaku,
-              autofocus: !fromEmote,
-              onSave: (msg) {
-                if (msg.isEmpty) {
-                  savedDanmaku?.clear();
-                  savedDanmaku = null;
-                } else {
-                  savedDanmaku = msg.toList();
-                }
-              },
-            ),
-          );
-        },
-        transitionDuration: fromEmote
-            ? const Duration(milliseconds: 400)
-            : PlatformUtils.isDesktop
-            ? const Duration(milliseconds: 350)
-            : const Duration(milliseconds: 400),
-      ),
-    );
+  void focusDanmakuInput() {
+    danmakuInputFocusNode.requestFocus();
   }
 
-  void onAtUser(DanmakuMsg item) {
-    savedDanmaku = [
-      RichTextItem.fromStart(
-        '@${item.name} ',
-        rawText: item.extra.mid.toString(),
-        type: .at,
-        id: item.extra.id.toString(),
-      ),
-    ];
-    onSendDanmaku();
+  /// 直接发送弹幕,复用原登录校验与发送接口。
+  /// 返回是否发送成功,供输入框决定是否清空内容。
+  Future<bool> sendLiveDanmaku(String msg) async {
+    final text = msg.trim();
+    if (text.isEmpty) {
+      return false;
+    }
+    if (kReleaseMode && !isLogin) {
+      toastNotLogin();
+      return false;
+    }
+    final res = await LiveHttp.sendLiveMsg(
+      roomId: roomId,
+      msg: text,
+    );
+    if (res.isSuccess) {
+      SmartDialog.showToast('发送成功');
+      return true;
+    }
+    res.toast();
+    return false;
   }
 
   void reportSC(SuperChatItem item) {
