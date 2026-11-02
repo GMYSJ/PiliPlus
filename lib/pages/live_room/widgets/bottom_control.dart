@@ -91,7 +91,7 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
   }
 
   Widget _buildRow(bool isFullScreen, BuildContext context) {
-    final maxWidth = context.size!.width;
+    final maxWidth = MediaQuery.of(context).size.width;
     final inputMaxWidth = maxWidth > 600 ? 320.0 : maxWidth * 0.45;
 
     return Row(
