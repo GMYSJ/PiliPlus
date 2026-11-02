@@ -83,9 +83,11 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
     final bottomPadding = MediaQuery.viewPaddingOf(context).bottom;
 
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 13 + (isFullScreen ? bottomPadding : 0),
+      padding: EdgeInsets.only(
+        left: 14,
+        right: 14,
+        top: 6,
+        bottom: 6 + (isFullScreen ? bottomPadding : 0),
       ),
       child: Material(
         type: .transparency,
@@ -104,11 +106,10 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
           icon: const Icon(Icons.refresh, size: 18, color: Colors.white),
           onTap: widget.onRefresh,
         ),
-        if (isFullScreen) ...[
-          const SizedBox(width: 10),
-          Flexible(flex: 2, child: _buildDanmakuInput()),
-        ],
-        const Spacer(),
+        if (isFullScreen)
+          Flexible(fit: FlexFit.loose, child: _buildDanmakuInput())
+        else
+          const Spacer(),
         ComBtn(
           height: 30,
           tooltip: '屏蔽',
@@ -242,53 +243,66 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
   }
 
   Widget _buildDanmakuInput() {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 400, minWidth: 140),
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.only(left: 14, right: 4),
-        decoration: BoxDecoration(
-          color: const Color(0x33000000),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF4D4D4D), width: 1),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Center(
-                heightFactor: 1,
-                child: RichTextField(
-                  controller: liveRoomCtr.danmakuTextController,
-                  focusNode: _danmakuFocusNode,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    height: 1.15,
+    return Obx(
+      () {
+        if (!plPlayerController.enableShowLiveDanmaku.value) {
+          return const SizedBox.shrink();
+        }
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Container(
+              height: 36,
+              padding: const EdgeInsets.only(left: 16, right: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFF4D4D4D), width: 1),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Center(
+                      heightFactor: 1,
+                      child: RichTextField(
+                        controller: liveRoomCtr.danmakuTextController,
+                        focusNode: _danmakuFocusNode,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          height: 1.15,
+                        ),
+                        cursorColor: Colors.white,
+                        textAlignVertical: TextAlignVertical.center,
+                        maxLines: 1,
+                        textInputAction: TextInputAction.send,
+                        decoration: InputDecoration(
+                          hintText: '发个弹幕吧',
+                          hintStyle: _hintStyle,
+                          border: InputBorder.none,
+                          isDense: true,
+                          isCollapsed: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onTap: () => plPlayerController.holdControls(),
+                        onChanged: (_) => plPlayerController.holdControls(),
+                        onSubmitted: (_) => _sendDanmaku(),
+                      ),
+                    ),
                   ),
-                  textAlignVertical: TextAlignVertical.center,
-                  textInputAction: TextInputAction.send,
-                  maxLines: 1,
-                  decoration: InputDecoration(
-                    isCollapsed: true,
-                    hintText: '发个弹幕吧',
-                    hintStyle: _hintStyle,
+                  const SizedBox(width: 6),
+                  ComBtn(
+                    height: 36,
+                    tooltip: '发送',
+                    icon: const Icon(Icons.send, size: 17, color: Colors.white),
+                    onTap: () => _sendDanmaku(),
                   ),
-                  onTap: () => plPlayerController.holdControls(),
-                  onChanged: (_) => plPlayerController.holdControls(),
-                  onSubmitted: (_) => _sendDanmaku(),
-                ),
+                ],
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.send, size: 15, color: Color(0x99FFFFFF)),
-              onPressed: _sendDanmaku,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
