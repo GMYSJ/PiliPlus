@@ -262,7 +262,7 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
                 controller: liveRoomCtr.danmakuTextController,
                 style: const TextStyle(color: Colors.white, fontSize: 14),
                 textInputAction: TextInputAction.send,
-                decoration: const BoxDecoration(
+                decoration: const InputDecoration(
                   color: Colors.transparent,
                 ),
                 onTap: () {
