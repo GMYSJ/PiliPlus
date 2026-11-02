@@ -12,7 +12,7 @@ import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart' hide TextField;
 
 class BottomControl extends StatefulWidget {
   const BottomControl({
@@ -256,25 +256,21 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
         child: Row(
           children: [
             Expanded(
-              child: TextField(
+              child: RichTextField(
                 focusNode: _danmakuFocusNode,
                 controller: liveRoomCtr.danmakuTextController,
                 style: const TextStyle(color: Colors.white, fontSize: 14),
-                textAlignVertical: TextAlignVertical.center,
-                maxLines: 1,
                 textInputAction: TextInputAction.send,
                 decoration: const BoxDecoration(
                   color: Colors.transparent,
                   border: InputBorder.none,
                 ),
                 hintStyle: _hintStyle,
-                obscuringCharacter: '•',
-                obscureText: false,
                 onTap: () {
                   plPlayerController.holdControls();
                 },
                 onSubmitted: (_) => _sendDanmaku(),
-                onChange: (_) {
+                onChanged: (_) {
                   plPlayerController.holdControls();
                 },
               ),
