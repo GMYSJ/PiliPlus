@@ -264,7 +264,7 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
                 textInputAction: TextInputAction.send,
                 decoration: const BoxDecoration(
                   color: Colors.transparent,
-                  border: Border.none,
+                  border: InputBorder.none,
                 ),
                 hintStyle: _hintStyle,
                 onTap: () {
