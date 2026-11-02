@@ -1,0 +1,162 @@
+name: Build with Danmaku Box
+
+# 用法：Actions -> 选这个工作流 -> Run workflow
+#   upstream_tag: 只填版本号，如 2.2.0.2；留空 = 自动取上游最新 release
+#   make_release: 勾上则创建一个 Release 并把 APK 挂上去
+#
+# 原理：先 checkout 上游那个 tag 的干净源码，再把你 fork 里的 4 个改动文件盖上去，
+#      然后编译 Android。上游升版不用手动 merge。
+
+on:
+    workflow_dispatch:
+        inputs:
+            upstream_tag:
+                description: '上游版本号（留空=自动取最新 release，例如 2.2.0.2）'
+                required: false
+                default: ''
+                type: string
+            source_ref:
+                description: '从哪个分支取这 4 个改动文件'
+                required: false
+                default: 'feature/landscape-danmaku-input'
+                type: string
+            make_release:
+                description: '创建 Release 并上传 APK'
+                required: false
+                default: false
+                type: boolean
+
+    # 也允许在 push 到本分支时自动编一次（方便验证）
+    # push:
+    #     branches: [ feature/landscape-danmaku-input ]
+
+env:
+    # 你的改动集中在这 4 个文件，编译前会从本分支覆盖到上游源码上
+    PATCH_FILES: >-
+        lib/pages/live_room/controller.dart
+        lib/pages/live_room/widgets/bottom_control.dart
+        lib/pages/live_room/widgets/header_control.dart
+        lib/plugin/pl_player/controller.dart
+
+jobs:
+    build:
+        name: Android (原版 + 弹幕框)
+        runs-on: ubuntu-latest
+        permissions: write-all
+
+        steps:
+            - name: 迁出本仓库
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: 记录自己的改动文件
+              env:
+                  SRC_REF: ${{ github.event.inputs.source_ref || 'feature/landscape-danmaku-input' }}
+              run: |
+                  SRC_REF="${SRC_REF:-feature/landscape-danmaku-input}"
+                  git fetch origin "$SRC_REF" --force
+                  echo "从 origin/$SRC_REF 取改动文件"
+                  mkdir -p /tmp/patchsrc
+                  for f in $PATCH_FILES; do
+                    mkdir -p "/tmp/patchsrc/$(dirname "$f")"
+                    git show "origin/$SRC_REF:$f" > "/tmp/patchsrc/$f"
+                    echo "saved: $f ($(wc -l < "/tmp/patchsrc/$f") 行)"
+                  done
+
+            - name: 拉取上游并确定版本
+              id: ver
+              run: |
+                  git remote add upstream https://github.com/bggRGjQaUbCoE/PiliPlus.git
+                  git fetch upstream --tags --force --depth=1 2>/dev/null || git fetch upstream --tags --force
+
+                  TAG="${{ github.event.inputs.upstream_tag }}"
+                  if [ -z "$TAG" ]; then
+                    TAG=$(curl -s https://api.github.com/repos/bggRGjQaUbCoE/PiliPlus/releases/latest \
+                          | grep -m1 '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
+                    echo "自动取到最新 release: $TAG"
+                  fi
+                  if ! git rev-parse "upstream/$TAG" >/dev/null 2>&1; then
+                    echo "::error::上游不存在 tag: $TAG"
+                    exit 1
+                  fi
+                  echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+                  echo "使用上游版本: $TAG"
+
+            - name: 切到上游干净源码 + 覆盖改动
+              run: |
+                  TAG='${{ steps.ver.outputs.tag }}'
+                  git checkout -B build "upstream/$TAG"
+                  for f in $PATCH_FILES; do
+                    cp "/tmp/patchsrc/$f" "$f"
+                    echo "overlaid: $f"
+                  done
+                  echo "--- 覆盖后相对上游的差异 ---"
+                  git --no-pager diff --stat
+
+            - name: 构建 Java 环境
+              uses: actions/setup-java@v5
+              with:
+                  distribution: 'zulu'
+                  java-version: '17'
+                  cache: 'gradle'
+                  cache-dependency-path: |
+                      android/*.gradle*
+                      android/**/gradle-wrapper.properties
+
+            - name: 安装 Flutter
+              uses: subosito/flutter-action@v2
+              with:
+                  channel: stable
+                  flutter-version-file: pubspec.yaml
+                  cache: true
+
+            - name: Apply Patch
+              shell: pwsh
+              run: lib/scripts/patch.ps1 android
+
+            - name: 写入签名
+              run: |
+                  if [ ! -z "${{ secrets.SIGN_KEYSTORE_BASE64 }}" ]; then
+                    echo "${{ secrets.SIGN_KEYSTORE_BASE64 }}" | base64 --decode > android/app/key.jks
+                    echo storeFile='key.jks' >> android/key.properties
+                    echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> android/key.properties
+                    echo keyAlias='${{ secrets.KEY_ALIAS }}' >> android/key.properties
+                    echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
+                    echo '已写入签名配置'
+                  else
+                    echo '未配置签名 secrets，将使用调试签名'
+                  fi
+
+            - name: 编译 APK
+              run: |
+                  flutter pub get
+                  flutter build apk --release --split-per-abi \
+                    --dart-define-from-file=pili_release.json --no-pub
+
+            - name: 重命名
+              run: |
+                  TAG='${{ steps.ver.outputs.tag }}'
+                  for f in build/app/outputs/flutter-apk/app-*-release.apk; do
+                    abi=$(echo "$f" | sed -E 's|.*app-(.*)-release\.apk|\1|')
+                    mv "$f" "PiliPlus_${TAG}_danmakubox_${abi}.apk"
+                  done
+                  ls -lh PiliPlus_*.apk
+
+            - name: 上传产物
+              uses: actions/upload-artifact@v7
+              with:
+                  archive: false
+                  name: PiliPlus-${{ steps.ver.outputs.tag }}-danmakubox
+                  path: PiliPlus_*.apk
+
+            - name: 创建 Release
+              if: ${{ github.event.inputs.make_release == 'true' }}
+              uses: softprops/action-gh-release@v3
+              with:
+                  tag_name: danmakubox-${{ steps.ver.outputs.tag }}
+                  name: 弹幕框版 ${{ steps.ver.outputs.tag }}
+                  body: |
+                    基于上游 PiliPlus ${{ steps.ver.outputs.tag }}
+                    已内置横屏底部弹幕输入框。
+                  files: PiliPlus_*.apk
