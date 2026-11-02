@@ -156,6 +156,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
   late DataSource dataSource;
 
   Timer? _timer;
+  bool _isHoldingControls = false;
   StreamSubscription? _subForSeek;
 
   Box setting = GStorage.setting;
@@ -1276,13 +1277,32 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
 
   /// 隐藏控制条
   void hideTaskControls() {
+    if (_isHoldingControls) return;
     _timer?.cancel();
     _timer = Timer(showControlDuration, () {
-      if (!isSeeking.value && !tripling && hoverDx == null) {
+      if (!isSeeking.value && !tripling && hoverDx == null && !_isHoldingControls) {
         controls = false;
       }
       _timer = null;
     });
+  }
+
+  /// 保持控件显示，取消自动隐藏计时器（输入框聚焦时调用）
+  void holdControls() {
+    _isHoldingControls = true;
+    _timer?.cancel();
+    _timer = null;
+    if (!showControls.value) {
+      controls = true;
+    }
+  }
+
+  /// 释放控件保持（输入框失焦时调用）
+  void releaseControls() {
+    _isHoldingControls = false;
+    if (showControls.value) {
+      hideTaskControls();
+    }
   }
 
   void onSeekStart(int seekFrom) {
@@ -1359,7 +1379,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
   set controls(bool visible) {
     showControls.value = visible;
     _timer?.cancel();
-    if (visible) {
+    _timer = null;
+    if (visible && !_isHoldingControls) {
       hideTaskControls();
     }
   }

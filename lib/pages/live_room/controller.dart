@@ -60,6 +60,7 @@ class LiveRoomController extends GetxController {
   int roomId = Get.arguments;
   int? ruid;
   DanmakuController<DanmakuExtra>? danmakuController;
+  final danmakuTextController = TextEditingController();
   final plPlayerController = PlPlayerController.getInstance(
     isLive: true,
   );
@@ -767,6 +768,31 @@ class LiveRoomController extends GetxController {
             : const Duration(milliseconds: 400),
       ),
     );
+  }
+
+  /// 从输入框直接发送弹幕
+  Future<void> sendDanmakuDirect(String message) async {
+    if (kReleaseMode && !isLogin) {
+      toastNotLogin();
+      return;
+    }
+    if (message.trim().isEmpty) {
+      SmartDialog.showToast('请输入弹幕内容');
+      return;
+    }
+    final res = await LiveHttp.sendLiveMsg(
+      roomId: roomId,
+      msg: message.trim(),
+      dmType: 0,
+      emoticonOptions: null,
+      replyMid: 0,
+      replayDmid: '',
+    );
+    if (res.isSuccess) {
+      SmartDialog.showToast('发送成功');
+    } else {
+      res.toast();
+    }
   }
 
   void onAtUser(DanmakuMsg item) {
