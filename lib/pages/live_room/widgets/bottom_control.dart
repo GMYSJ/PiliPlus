@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
+import 'package:PiliPlus/common/widgets/flutter/text_field/text_field.dart';
 import 'package:PiliPlus/models/common/video/base_quality.dart';
 import 'package:PiliPlus/pages/live_room/controller.dart';
 import 'package:PiliPlus/pages/video/widgets/header_mixin.dart';
@@ -263,7 +264,7 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
                 textInputAction: TextInputAction.send,
                 decoration: const BoxDecoration(
                   color: Colors.transparent,
-                  border: InputBorder.none,
+                  border: Border.none,
                 ),
                 hintStyle: _hintStyle,
                 onTap: () {
