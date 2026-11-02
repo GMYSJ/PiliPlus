@@ -83,7 +83,10 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
     final bottomPadding = MediaQuery.viewPaddingOf(context).bottom;
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13 + bottomPadding),
+      padding: EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 13 + (isFullScreen ? bottomPadding : 0),
+      ),
       child: Material(
         type: .transparency,
         child: _buildRow(isFullScreen, context),
@@ -245,33 +248,31 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth, minWidth: 120),
       child: Container(
-        height: 38,
+        padding: const EdgeInsets.only(left: 12, right: 2),
         decoration: BoxDecoration(
           color: const Color(0x4D000000),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFF4D4D4D),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFF4D4D4D), width: 1),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: RichTextField(
-                focusNode: _danmakuFocusNode,
                 controller: liveRoomCtr.danmakuTextController,
+                focusNode: _danmakuFocusNode,
                 style: const TextStyle(color: Colors.white, fontSize: 14),
+                textAlignVertical: TextAlignVertical.center,
                 textInputAction: TextInputAction.send,
-                decoration: const InputDecoration(
-                  color: Colors.transparent,
+                maxLines: 1,
+                decoration: InputDecoration(
+                  hintText: '发个弹幕吧',
+                  border: InputBorder.none,
+                  hintStyle: _hintStyle,
                 ),
-                onTap: () {
-                  plPlayerController.holdControls();
-                },
+                onTap: () => plPlayerController.holdControls(),
+                onChanged: (_) => plPlayerController.holdControls(),
                 onSubmitted: (_) => _sendDanmaku(),
-                onChanged: (_) {
-                  plPlayerController.holdControls();
-                },
               ),
             ),
             IconButton(
