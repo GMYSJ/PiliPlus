@@ -238,7 +238,6 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
                       inAppFullScreen: true,
                     ),
                   ),
-                ],
               ],
             ),
           ),
@@ -268,10 +267,9 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
                 controller: liveRoomCtr.danmakuTextController,
                 style: const TextStyle(color: Colors.white, fontSize: 14),
                 textAlignVertical: TextAlignVertical.center,
-                isDense: true,
                 maxLines: 1,
                 textInputAction: TextInputAction.send,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.transparent,
                   border: InputBorder.none,
                 ),
@@ -283,7 +281,6 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
                 },
                 onSubmitted: (_) => _sendDanmaku(),
                 onChange: (_) {
-                  // 打字时确保控件不隐藏
                   plPlayerController.holdControls();
                 },
               ),
