@@ -266,7 +266,6 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
                   color: Colors.transparent,
                   border: InputBorder.none,
                 ),
-                hintStyle: _hintStyle,
                 onTap: () {
                   plPlayerController.holdControls();
                 },
