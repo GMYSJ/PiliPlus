@@ -264,7 +264,6 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
                 textInputAction: TextInputAction.send,
                 decoration: const BoxDecoration(
                   color: Colors.transparent,
-                  border: InputBorder.none,
                 ),
                 onTap: () {
                   plPlayerController.holdControls();

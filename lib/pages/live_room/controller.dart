@@ -60,7 +60,7 @@ class LiveRoomController extends GetxController {
   int roomId = Get.arguments;
   int? ruid;
   DanmakuController<DanmakuExtra>? danmakuController;
-  final danmakuTextController = TextEditingController();
+  final danmakuTextController = RichTextEditingController();
   final plPlayerController = PlPlayerController.getInstance(
     isLive: true,
   );
