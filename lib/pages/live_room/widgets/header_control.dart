@@ -152,7 +152,8 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
                 onTap: () => plPlayerController.setAlwaysOnTop(!isAlwaysOnTop),
               );
             }),
-          if (isFullScreen || PlatformUtils.isDesktop)
+          // 横屏全屏已有底部弹幕框，右上角不再重复提供发弹幕入口
+          if (PlatformUtils.isDesktop && !isFullScreen)
             ComBtn(
               height: btnHeight,
               tooltip: '发弹幕',

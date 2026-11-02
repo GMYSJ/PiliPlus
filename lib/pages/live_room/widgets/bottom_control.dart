@@ -46,7 +46,7 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
   final FocusNode _danmakuFocusNode = FocusNode();
   final TextStyle _hintStyle = const TextStyle(
     color: Color(0x80FFFFFF),
-    fontSize: 14,
+    fontSize: 13,
   );
 
   @override
@@ -95,9 +95,6 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
   }
 
   Widget _buildRow(bool isFullScreen, BuildContext context) {
-    final maxWidth = MediaQuery.of(context).size.width;
-    final inputMaxWidth = maxWidth > 600 ? 320.0 : maxWidth * 0.45;
-
     return Row(
       children: [
         PlayOrPauseButton(plPlayerController: plPlayerController),
@@ -108,8 +105,8 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
           onTap: widget.onRefresh,
         ),
         if (isFullScreen) ...[
-          const SizedBox(width: 8),
-          _buildDanmakuInput(inputMaxWidth),
+          const SizedBox(width: 10),
+          Flexible(flex: 2, child: _buildDanmakuInput()),
         ],
         const Spacer(),
         ComBtn(
@@ -244,42 +241,50 @@ class _BottomControlState extends State<BottomControl> with HeaderMixin {
     );
   }
 
-  Widget _buildDanmakuInput(double maxWidth) {
+  Widget _buildDanmakuInput() {
     return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth, minWidth: 120),
+      constraints: const BoxConstraints(maxWidth: 400, minWidth: 140),
       child: Container(
-        padding: const EdgeInsets.only(left: 12, right: 2),
+        height: 32,
+        padding: const EdgeInsets.only(left: 14, right: 4),
         decoration: BoxDecoration(
-          color: const Color(0x4D000000),
-          borderRadius: BorderRadius.circular(20),
+          color: const Color(0x33000000),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFF4D4D4D), width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
-              child: RichTextField(
-                controller: liveRoomCtr.danmakuTextController,
-                focusNode: _danmakuFocusNode,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                textAlignVertical: TextAlignVertical.center,
-                textInputAction: TextInputAction.send,
-                maxLines: 1,
-                decoration: InputDecoration(
-                  hintText: '发个弹幕吧',
-                  border: InputBorder.none,
-                  hintStyle: _hintStyle,
+              child: Center(
+                heightFactor: 1,
+                child: RichTextField(
+                  controller: liveRoomCtr.danmakuTextController,
+                  focusNode: _danmakuFocusNode,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    height: 1.15,
+                  ),
+                  textAlignVertical: TextAlignVertical.center,
+                  textInputAction: TextInputAction.send,
+                  maxLines: 1,
+                  decoration: InputDecoration(
+                    isCollapsed: true,
+                    hintText: '发个弹幕吧',
+                    hintStyle: _hintStyle,
+                  ),
+                  onTap: () => plPlayerController.holdControls(),
+                  onChanged: (_) => plPlayerController.holdControls(),
+                  onSubmitted: (_) => _sendDanmaku(),
                 ),
-                onTap: () => plPlayerController.holdControls(),
-                onChanged: (_) => plPlayerController.holdControls(),
-                onSubmitted: (_) => _sendDanmaku(),
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.send, size: 18, color: Color(0xFF4D4D4D)),
+              icon: const Icon(Icons.send, size: 15, color: Color(0x99FFFFFF)),
               onPressed: _sendDanmaku,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
             ),
           ],
         ),
