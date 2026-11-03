@@ -91,6 +91,12 @@ jobs:
                     echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> android/key.properties
                     echo keyAlias='${{ secrets.KEY_ALIAS }}' >> android/key.properties
                     echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
+                  elif [ -f .signing/pili.p12.b64 ]; then
+                    base64 -d .signing/pili.p12.b64 > android/app/key.p12
+                    echo storeFile='key.p12' >> android/key.properties
+                    echo storePassword='PiliPlusPersonalBuild' >> android/key.properties
+                    echo keyAlias='pili' >> android/key.properties
+                    echo keyPassword='PiliPlusPersonalBuild' >> android/key.properties
                   fi
 
             - name: Set and Extract version
