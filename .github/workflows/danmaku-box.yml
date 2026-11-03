@@ -95,6 +95,7 @@ jobs:
                   SHA='${{ steps.ver.outputs.sha }}'
                   git checkout -B build "$SHA"
                   for f in $PATCH_FILES; do
+                    mkdir -p "$(dirname "$f")"
                     cp "/tmp/patchsrc/$f" "$f"
                     echo "overlaid: $f"
                   done
